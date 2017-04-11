@@ -21,7 +21,7 @@ f (a : Int, b : Int) : Int
         let d = 9,
         let e = 7 * 9 + 7
     ;
-    (a += b + c).
+    (a + b + c).
 """)
 }
 

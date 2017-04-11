@@ -16,5 +16,8 @@ class SumType(name: String, val types: Map<String, List<Type>>) : Type(name) {
 
 fun List<Type>.from(name: String): Type {
     // TODO: Retrieve Variants in Sum Types
+    // TODO: Return Undefined if it isn't found
     return filter { it.name == name }.first()
 }
+
+val Undefined = PrimitiveType("Undefined")
