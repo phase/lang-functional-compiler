@@ -27,7 +27,7 @@ productType
 
 functionDeclaration
     : functionName '(' argumentList ')' typeAnnotation?
-        statementList ',' expression '.'
+        statementList expression '.'
     ;
 
 functionName: ID | '(' OPERATOR ')';
@@ -39,8 +39,9 @@ variableSignature: ID typeAnnotation?;
 
 statementList
     :
-    | statement (',' statementList)?
-    | blockStatement (';' statementList)?
+    | statement
+    | statement ',' statementList
+    | blockStatement statementList
     ;
 
 statement
@@ -49,7 +50,7 @@ statement
     ;
 
 blockStatement
-    : 'if' expression statementList
+    : 'if' expression statementList ';'
     ;
 
 expression
@@ -66,11 +67,7 @@ ID: LETTER (LETTER | DIGIT)*;
 INT: DIGIT+;
 OPERATOR: SYMBOL+;
 
-fragment SYMBOL:
-    '-' | '+' | '*' | '/' | '.' | '>' | '<'
-    '=' | '~' | '!' | '@' | '$' | '%' | '^'
-    '&' | '|' | '`';
-
+fragment SYMBOL: [-+*/<>~!@#$%^&|=];
 fragment DIGIT: '0'..'9';
 fragment LETTER: [a-zA-Z];
 
