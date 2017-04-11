@@ -1,6 +1,6 @@
 grammar Lang;
 
-program
+module
     : importDeclaration* externalDeclaration* EOF;
 
 importDeclaration
@@ -16,7 +16,7 @@ typeDeclaration
     ;
 
 sumType
-    : ID ID ('|' ID ID)*
+    : ID ID+ ('|' ID ID+)*
     ;
 
 productType
@@ -59,6 +59,7 @@ expression
     | ID
     | INT
     | 'true' | 'false'
+    | ID '{' expression (',' expression)* '}' // Type initialization
     ;
 
 // Lexing
