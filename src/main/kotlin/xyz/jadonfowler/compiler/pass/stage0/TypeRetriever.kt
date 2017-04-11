@@ -7,9 +7,9 @@ import xyz.jadonfowler.compiler.ast.from
 import xyz.jadonfowler.compiler.parser.LangBaseVisitor
 import xyz.jadonfowler.compiler.parser.LangParser
 
-class TypeRetriever(ctx: LangParser.ModuleContext?, knownTypes: List<Type>) : LangBaseVisitor<Type?>() {
+class TypeRetriever(ctx: LangParser.ModuleContext?, val knownTypes: List<Type>) : LangBaseVisitor<Type?>() {
 
-    val types = knownTypes.toMutableList()
+    val types = mutableListOf<Type>()
 
     init {
         visitModule(ctx)
@@ -39,7 +39,12 @@ class TypeRetriever(ctx: LangParser.ModuleContext?, knownTypes: List<Type>) : La
         // Go through the IDs in twos
         (0..fieldCount - 1).forEach {
             val fieldName = ctx.ID(it * 2).symbol.text
-            val fieldType = types.from(ctx.ID(it * 2 + 1).symbol.text)
+            val fieldTypeName = ctx.ID(it * 2 + 1).symbol.text
+            val fieldType = if (types.map(Type::name).contains(fieldTypeName)) {
+                types.from(fieldTypeName)
+            } else {
+                knownTypes.from(fieldTypeName)
+            }
             fields.put(fieldName, fieldType)
         }
         return ProductType(typeName, fields)
@@ -57,11 +62,16 @@ class TypeRetriever(ctx: LangParser.ModuleContext?, knownTypes: List<Type>) : La
                 // Reset
                 variantName = ""
                 variantTypes = mutableListOf()
-            } else if (variantName == "")
+            } else if (variantName == "") {
                 variantName = it.text
-            else
-                variantTypes.add(types.from(it.text))
-
+            } else {
+                val variantType = if (types.map(Type::name).contains(it.text)) {
+                    types.from(it.text)
+                } else {
+                    knownTypes.from(it.text)
+                }
+                variantTypes.add(variantType)
+            }
         }
         // Final one isn't caught
         variants.put(variantName, variantTypes)
