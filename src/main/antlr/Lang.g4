@@ -46,7 +46,7 @@ statementList
 
 statement
     : 'return' expression
-    | 'let' ID '=' expression
+    | 'let' variableSignature '=' expression
     ;
 
 blockStatement
@@ -59,7 +59,16 @@ expression
     | ID
     | INT
     | 'true' | 'false'
-    | ID '{' expression (',' expression)* '}' // Type initialization
+    | typeInitialization
+    | functionCall
+    ;
+
+typeInitialization
+    : ID '{' expression (',' expression)* '}'
+    ;
+
+functionCall
+    : ID '(' expression (',' expression)* ')'
     ;
 
 // Lexing
@@ -68,8 +77,9 @@ ID: LETTER (LETTER | DIGIT)*;
 INT: DIGIT+;
 OPERATOR: SYMBOL+;
 
-fragment SYMBOL: [-+*/<>~!@#$%^&|=];
+fragment SYMBOL: [-+*/<>~!@$%^&|=];
 fragment DIGIT: '0'..'9';
 fragment LETTER: [a-zA-Z];
 
 WS: [ \r\t\n]+ -> skip;
+COMMENT:  '#' ~('\r' | '\n')* -> skip;

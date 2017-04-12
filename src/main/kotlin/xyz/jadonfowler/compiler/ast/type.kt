@@ -14,10 +14,11 @@ class SumType(name: String, val types: Map<String, List<Type>>) : Type(name) {
     override fun toString(): String = "type $name = ${types.map { "${it.key} ${it.value.joinToString(" ")}" }.joinToString(" | ")}"
 }
 
+fun <T> List<T>.firstOr(l: T): T = if (isEmpty()) l else first()
+
 fun List<Type>.from(name: String): Type {
     // TODO: Retrieve Variants in Sum Types
-    // TODO: Return Undefined if it isn't found
-    return filter { it.name == name }.first()
+    return filter { it.name == name }.firstOr(Undefined)
 }
 
 val Undefined = PrimitiveType("Undefined")

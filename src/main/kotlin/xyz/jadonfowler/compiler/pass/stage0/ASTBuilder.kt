@@ -24,6 +24,8 @@ class ASTBuilder(val moduleName: String, ctx: LangParser.ModuleContext?, val kno
                     knownTypes.from(it.typeAnnotation().ID().symbol.text.orEmpty()))
         }.orEmpty()
         val statements = visitStatementList(ctx?.statementList())
+        statements.add(ReturnStatement(visitExpression(ctx?.expression())))
+
         val returnType = knownTypes.from(ctx?.typeAnnotation()?.ID()?.symbol?.text.orEmpty())
 
         if (ctx?.functionName()?.ID() != null) {
@@ -46,16 +48,70 @@ class ASTBuilder(val moduleName: String, ctx: LangParser.ModuleContext?, val kno
             statements.add(visitStatement(ctx.statement()))
         else if (ctx?.blockStatement() != null)
             statements.add(visitBlockStatement(ctx.blockStatement()))
-        statements.addAll(visitStatementList(ctx?.statementList()))
+        if (ctx?.statementList() != null)
+            statements.addAll(visitStatementList(ctx.statementList()))
         return StatementList(*statements.toTypedArray())
     }
 
     override fun visitBlockStatement(ctx: LangParser.BlockStatementContext?): Statement {
+        val firstToken = ctx?.getChild(0)?.text.orEmpty()
+        when (firstToken) {
+            "if" -> {
+                val expression = visitExpression(ctx?.expression())
+                val statements = visitStatementList(ctx?.statementList())
+                return IfStatement(expression, statements)
+            }
+        }
         return Noop()
     }
 
     override fun visitStatement(ctx: LangParser.StatementContext?): Statement {
+        val firstToken = ctx?.getChild(0)?.text.orEmpty()
+        when (firstToken) {
+            "let" -> {
+                val name = ctx?.variableSignature()?.ID()?.symbol?.text.orEmpty()
+                val type = knownTypes.from(ctx?.variableSignature()?.typeAnnotation()?.ID()?.symbol?.text.orEmpty())
+                val expression = visitExpression(ctx?.expression())
+                return VariableDeclarationStatement(true, name, type, expression)
+            }
+            "return" -> {
+                val expression = visitExpression(ctx?.expression())
+                return ReturnStatement(expression)
+            }
+        }
         return Noop()
+    }
+
+    override fun visitExpression(ctx: LangParser.ExpressionContext?): Expression {
+        ctx?.INT()?.symbol?.text?.let {
+            return IntegerLiteral(it.toInt())
+        }
+        ctx?.ID()?.symbol?.text?.let {
+            return Reference(it)
+        }
+        ctx?.OPERATOR()?.symbol?.text?.let {
+            val a = visitExpression(ctx.expression(0))
+            val b = visitExpression(ctx.expression(1))
+            return FunctionCallExpression(it, listOf(a, b))
+        }
+        ctx?.functionCall()?.let {
+            val name = it.ID().symbol.text
+            val expressions = it.expression().map { visitExpression(it) }
+            return FunctionCallExpression(name, expressions)
+        }
+        ctx?.typeInitialization()?.let {
+            val name = it.ID().symbol.text
+            val expressions = it.expression().map { visitExpression(it) }
+            return TypeInitializationExpression(name, expressions)
+        }
+
+        val firstToken = ctx?.getChild(0)?.text.orEmpty()
+        when (firstToken) {
+            "(" -> return visitExpression(ctx?.expression(0))
+            "true", "false" -> return BooleanLiteral(firstToken.toBoolean())
+        }
+
+        return IntegerLiteral(0) // TODO: Remove
     }
 
 }
